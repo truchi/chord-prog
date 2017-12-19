@@ -9,6 +9,24 @@ class Progression {
     this.plan     = this._normalizePlan(plan)
   }
 
+  setChord(chord) {
+    const name        = `${chord.root.name} ${chord.toString()}`
+    this.chords[name] = name
+
+    return this
+  }
+
+  duplicateSection(name) {
+    const section = this.sections[name]
+
+    let [ful, str, int] = /([a-z]*)([0-9]*)/gi.exec(name)
+    int = int || 0
+
+    this.sections[str + ++int] = section.map(chord => Object.assign({}, chord))
+
+    return this
+  }
+
   iterator() {
     return this[Symbol.iterator]()
   }
