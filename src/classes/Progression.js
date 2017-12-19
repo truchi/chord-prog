@@ -5,8 +5,8 @@ const arr2intvs = (arr) => MuJS.utils.arr2items(MuJS.Interval, arr)
 class Progression {
   constructor (chords, sections, plan) {
     this.chords   = chords
-    this.sections = sections
-    this.plan     = this._normalizePlan(plan)
+    this.sections = this._normalize(sections, 'chord'  )
+    this.plan     = this._normalize(plan    , 'section')
   }
 
   setChord(chord) {
@@ -32,9 +32,9 @@ class Progression {
   }
 
   [Symbol.iterator]() {
-    let        done = false
-    let   planIndex = 0
-    let  chordIndex = 0
+    let       done = false
+    let  planIndex = 0
+    let chordIndex = 0
 
     return {
       next: () => {
@@ -44,33 +44,41 @@ class Progression {
         let section = this.plan[planIndex]
         section     = this.sections[section]
         // Chord
-        let { chord, quarters } = section[chordIndex]
+        let chord = section[chordIndex]
         chord = this.chords[chord]
         let [root, ...intvs] = chord.split(' ')
         root  = new MuJS.Note(root)
         intvs = arr2intvs(intvs)
         chord = new MuJS.Mode(root, intvs)
-        // Value
-        let value = { chord, quarters }
 
         // Update indexes
         ++chordIndex
         if (chordIndex  >= section.length  ) ++planIndex && (chordIndex  = 0)
         if (planIndex   >= this.plan.length) done = true
 
-        return { value, done: false }
+        return { value: chord, done: false }
       }
     }
   }
 
-  _normalizePlan(plan) {
-    let ret = []
+  _normalize(arr, key) {
+    let ret
 
-    plan.forEach(part => {
-      const l = part.repeat || 1
+    if (Array.isArray(arr)) {
+      ret = []
 
-      for(let i = 0; i < l; ++i) ret.push(part.section)
-    })
+      arr.forEach(part => {
+        const l = part.repeat || 1
+
+        for(let i = 0; i < l; ++i) ret.push(part[key])
+      })
+    } else {
+      ret = {}
+
+      for (let name in arr) {
+        ret[name] = this._normalize(arr[name], key)
+      }
+    }
 
     return ret
   }
